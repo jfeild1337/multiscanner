@@ -26,6 +26,8 @@ import hashlib
 import configparser
 import multiprocessing
 import queue
+from uuid import uuid4
+from flask_cors import cross_origin
 from flask import Flask, jsonify, make_response, request, abort
 
 MS_WD = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -95,6 +97,7 @@ def index():
 
 
 @app.route('/api/v1/tasks/list/', methods=['GET'])
+@cross_origin()
 def task_list():
     '''
     Return a JSON dictionary containing all the tasks
@@ -105,6 +108,7 @@ def task_list():
 
 
 @app.route('/api/v1/tasks/list/<int:task_id>', methods=['GET'])
+@cross_origin()
 def get_task(task_id):
     '''
     Return a JSON dictionary corresponding
@@ -118,6 +122,7 @@ def get_task(task_id):
 
 
 @app.route('/api/v1/tasks/delete/<int:task_id>', methods=['GET'])
+@cross_origin()
 def delete_task(task_id):
     '''
     Delete the specified task. Return deleted message.
@@ -129,6 +134,7 @@ def delete_task(task_id):
 
 
 @app.route('/api/v1/tasks/create/', methods=['POST'])
+@cross_origin()
 def create_task():
     '''
     Create a new task. Save the submitted file
@@ -158,6 +164,7 @@ def create_task():
 
 
 @app.route('/api/v1/tasks/report/<task_id>', methods=['GET'])
+@cross_origin()
 def get_report(task_id):
     '''
     Return a JSON dictionary corresponding
@@ -180,6 +187,7 @@ def get_report(task_id):
 
 
 @app.route('/api/v1/tasks/delete/<task_id>', methods=['GET'])
+@cross_origin()
 def delete_report(task_id):
     '''
     Delete the specified task. Return deleted message.
@@ -192,6 +200,84 @@ def delete_report(task_id):
         return jsonify({'Message': 'Deleted'})
     else:
         abort(HTTP_NOT_FOUND)
+
+
+@app.route('/api/v1/tags/', methods=['GET'])
+@cross_origin()
+def taglist():
+    '''
+    Return a list of all tags currently in use.
+    '''
+    response = handler.get_tags()
+    if not response:
+        abort(HTTP_BAD_REQUEST)
+    return jsonify({'Tags': response})
+
+
+@app.route('/api/v1/tasks/tags/<task_id>', methods=['GET'])
+@cross_origin()
+def tags(task_id):
+    '''
+    Add/Remove the specified tag to the specified task.
+    '''
+    task = db.get_task(task_id)
+    if not task:
+        abort(HTTP_NOT_FOUND)
+
+    add = request.args.get('add', '')
+    if add:
+        response = handler.add_tag(task.sample_id, add)
+        if not response:
+            abort(HTTP_BAD_REQUEST)
+        return jsonify({'Message': 'Tag Added'})
+
+    remove = request.args.get('remove', '')
+    if remove:
+        response = handler.remove_tag(task.sample_id, remove)
+        if not response:
+            abort(HTTP_BAD_REQUEST)
+        return jsonify({'Message': 'Tag Removed'})
+
+
+@app.route('/api/v1/tasks/<task_id>/notes', methods=['GET'])
+@cross_origin()
+def get_notes(task_id):
+    '''
+    Add an analyst note/comment to the specified task.
+    '''
+    task = db.get_task(task_id)
+    if not task:
+        abort(HTTP_NOT_FOUND)
+
+    if ('ts' in request.args and 'uid' in request.args):
+        ts = request.args.get('ts', '')
+        uid = request.args.get('uid', '')
+        response = handler.get_notes(task.sample_id, [ts, uid])
+    else:
+        response = handler.get_notes(task.sample_id)
+
+    if not response:
+        abort(HTTP_BAD_REQUEST)
+
+    if 'hits' in response and 'hits' in response['hits']:
+        response = response['hits']['hits']
+    return jsonify(response)
+
+
+@app.route('/api/v1/tasks/<task_id>/note', methods=['POST'])
+@cross_origin()
+def add_note(task_id):
+    '''
+    Add an analyst note/comment to the specified task.
+    '''
+    task = db.get_task(task_id)
+    if not task:
+        abort(HTTP_NOT_FOUND)
+
+    response = handler.add_note(task.sample_id, request.form.to_dict())
+    if not response:
+        abort(HTTP_BAD_REQUEST)
+    return jsonify(response)
 
 
 if __name__ == '__main__':

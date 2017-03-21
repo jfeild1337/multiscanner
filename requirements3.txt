@@ -10,6 +10,7 @@ requests
 ssdeep
 #Required by API
 flask
+flask_cors
 sqlalchemy
 sqlalchemy-utils
 #Required by distributed feature
