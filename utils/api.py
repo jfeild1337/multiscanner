@@ -15,6 +15,9 @@ POST /api/v1/tasks/create ---> POST file and receive report id
 Sample POST usage:
     curl -i -X POST http://localhost:8080/api/v1/tasks/create/ -F file=@/bin/ls
 
+The API endpoints all have Cross Origin Resource Sharing (CORS) enabled and set
+to allow ALL origins.
+
 TODO:
 * Add doc strings to functions
 '''
@@ -158,7 +161,6 @@ def create_task():
     multiscanner_celery.delay(full_path, original_filename, task_id, f_name)
 
     return make_response(
-        jsonify({'Message': {'task_id': task_id}}),
         HTTP_CREATED
     )
 
@@ -175,7 +177,6 @@ def get_report(task_id):
         abort(HTTP_NOT_FOUND)
 
     if task.task_status == 'Complete':
-        report = handler.get_report(task.report_id)
 
     elif task.task_status == 'Pending':
         report = {'Report': 'Task still pending'}
