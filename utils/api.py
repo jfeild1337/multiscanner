@@ -161,6 +161,7 @@ def create_task():
     multiscanner_celery.delay(full_path, original_filename, task_id, f_name)
 
     return make_response(
+        jsonify({'Message': {'task_id': task_id}}),
         HTTP_CREATED
     )
 
