@@ -177,6 +177,7 @@ def get_report(task_id):
         abort(HTTP_NOT_FOUND)
 
     if task.task_status == 'Complete':
+        report = handler.get_report(task.report_id)
 
     elif task.task_status == 'Pending':
         report = {'Report': 'Task still pending'}
