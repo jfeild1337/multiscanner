@@ -13,6 +13,7 @@ flask
 flask_cors
 sqlalchemy
 sqlalchemy-utils
+psycopg2
 #Required by distributed feature
 celery
 #Required by storage modules
