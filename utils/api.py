@@ -77,6 +77,13 @@ for handler in storage_handler.loaded_storage:
     if isinstance(handler, elasticsearch_storage.ElasticSearchStorage):
         break
 
+# -------- Enable running under mod_wsgi --------------
+db.init_db()
+
+if not os.path.isdir(api_config['api']['upload_folder']):
+    print('Creating upload dir')
+    os.makedirs(api_config['api']['upload_folder'])
+# ------- End Enable running under mod_wsgi ------------
 
 @app.errorhandler(HTTP_BAD_REQUEST)
 def invalid_request(error):
